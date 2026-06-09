@@ -5,6 +5,106 @@
 This repository contains the [OTLP protocol specification](docs/specification.md)
 and the corresponding Language Independent Interface Types ([.proto files](opentelemetry/proto)).
 
+## Rust Prost Generator Fork
+
+This fork adds a small Rust generator for producing `prost` bindings from the
+checked-in OpenTelemetry proto files. The generator is intended to stay as a thin
+overlay on top of upstream `open-telemetry/opentelemetry-proto`, with
+`v1.10.0` as the maintained upstream baseline.
+
+Generated Rust files are written to `gen/`, which is ignored by Git. Keep the
+upstream `.proto` files unchanged unless intentionally moving this fork to a new
+upstream OpenTelemetry proto tag.
+
+### Supported Platforms
+
+The Nix flake supports:
+
+- `aarch64-darwin`
+- `aarch64-linux`
+- `x86_64-linux`
+
+Windows and Intel macOS are not supported by this flake.
+
+### Generate Rust Protobuf Bindings
+
+With Nix:
+
+```sh
+nix develop
+cargo run
+```
+
+Or run the packaged generator directly:
+
+```sh
+nix run .
+```
+
+Without Nix, install a stable Rust toolchain and `protoc`, then run:
+
+```sh
+cargo run
+```
+
+The output should contain files such as:
+
+```text
+gen/opentelemetry.proto.common.v1.rs
+gen/opentelemetry.proto.metrics.v1.rs
+gen/opentelemetry.proto.collector.metrics.v1.rs
+```
+
+### Validate the Generator
+
+```sh
+cargo fmt --check
+cargo check
+nix flake check
+```
+
+When using Nix flakes from a Git worktree, new files must be tracked by Git
+before Nix can see them. If `nix flake check` reports that `Cargo.lock` or
+another crate file is not tracked, add the generator files to Git first:
+
+```sh
+git add Cargo.toml Cargo.lock src/main.rs flake.nix flake.lock
+```
+
+### Maintain Against Upstream v1.10.0
+
+Add the upstream repository once:
+
+```sh
+git remote add upstream https://github.com/open-telemetry/opentelemetry-proto.git
+git fetch upstream --tags
+```
+
+Create or reset a maintenance branch from the upstream `v1.10.0` tag:
+
+```sh
+git checkout -B prost-generator-v1.10.0 v1.10.0
+```
+
+Then apply or cherry-pick the generator overlay files:
+
+```text
+Cargo.toml
+Cargo.lock
+flake.nix
+flake.lock
+src/main.rs
+```
+
+After merging upstream changes or moving to a later upstream tag, regenerate and
+validate:
+
+```sh
+cargo run
+cargo check
+nix flake check
+```
+
 ## Language Independent Interface Types
 
 The proto files can be consumed as GIT submodules or copied and built directly in the consumer project.
